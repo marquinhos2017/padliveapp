@@ -2,15 +2,72 @@ import 'dart:async';
 
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 Future main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initialization(null);
-  runApp(const MyApp());
+  runApp(
+    ChangeNotifierProvider(
+      create: (context) => ThemeProvider(),
+      child: MyApp(),
+    ),
+  );
 }
 
 Future initialization(BuildContext? context) async {
   await Future.delayed(Duration(seconds: 3));
+}
+
+class ThemeProvider with ChangeNotifier {
+  bool _isDarkMode = true;
+
+  bool get isDarkMode => _isDarkMode;
+
+  ThemeData get themeData => _isDarkMode ? _darkTheme : _lightTheme;
+
+  void toggleTheme() {
+    _isDarkMode = !_isDarkMode;
+    notifyListeners();
+  }
+
+  // 🔴 Defina aqui as cores do tema escuro
+  final ThemeData _darkTheme = ThemeData(
+    brightness: Brightness.dark,
+    primaryColor: Colors.purple,
+    scaffoldBackgroundColor: Colors.black,
+    appBarTheme: AppBarTheme(
+      backgroundColor: Colors.purple,
+      titleTextStyle: TextStyle(color: Colors.white, fontSize: 20),
+    ),
+    textTheme: TextTheme(
+      bodyLarge: TextStyle(color: Colors.white),
+      bodyMedium: TextStyle(color: Colors.white70),
+    ),
+    switchTheme: SwitchThemeData(
+      thumbColor: MaterialStateProperty.all(Colors.purpleAccent),
+      trackColor: MaterialStateProperty.all(Colors.white24),
+    ),
+  );
+
+  // 🟢 Defina aqui as cores do tema claro
+  final ThemeData _lightTheme = ThemeData(
+    brightness: Brightness.light,
+    primaryColor: Colors.blue,
+    scaffoldBackgroundColor: Colors.white,
+    appBarTheme: AppBarTheme(
+      backgroundColor: Colors.blue,
+      titleTextStyle: TextStyle(color: Colors.white, fontSize: 20),
+    ),
+    textTheme: TextTheme(
+      bodyLarge: TextStyle(color: Colors.black),
+      bodyMedium: TextStyle(color: Colors.black87),
+    ),
+    switchTheme: SwitchThemeData(
+      thumbColor: MaterialStateProperty.all(Colors.blueAccent),
+      trackColor: MaterialStateProperty.all(Colors.black26),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -19,13 +76,16 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'PadLive',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
-      ),
-      home: const MyHomePage(title: 'PadLive'),
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, child) {
+        return MaterialApp(
+          debugShowCheckedModeBanner: false,
+          theme: themeProvider.themeData,
+          home: MyHomePage(
+            title: "PadLive",
+          ),
+        );
+      },
     );
   }
 }
@@ -197,6 +257,46 @@ class _MyHomePageState extends State<MyHomePage> {
           (currentVolume + 0.1).clamp(0.0, 1.0); // Limita o volume entre 0 e 1
     });
     currentAudioPlayer.setVolume(currentVolume);
+  }
+
+  ElevatedButton buildCustomButton(BuildContext context,
+      bool cSustenidoAudioPlayer_bool, Function() onPressed) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+
+    // Definição de cores baseadas no tema
+    Color textColor = cSustenidoAudioPlayer_bool
+        ? Colors.red
+        : (themeProvider.isDarkMode ? Colors.white : Colors.black);
+
+    Color backgroundColor =
+        themeProvider.isDarkMode ? Colors.black : Colors.white;
+    Color borderColor = cSustenidoAudioPlayer_bool ? Colors.red : textColor;
+
+    return ElevatedButton(
+      child: Center(
+        child: Text(
+          "C#",
+          style: TextStyle(
+            fontSize: 28,
+            color: textColor,
+          ),
+        ),
+      ),
+      style: ButtonStyle(
+        fixedSize: MaterialStateProperty.all<Size>(Size(90, 90)),
+        shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+          RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18.0),
+            side: BorderSide(color: borderColor),
+          ),
+        ),
+        backgroundColor: MaterialStateProperty.all(backgroundColor),
+        elevation: MaterialStateProperty.all(0), // Sem sombra
+        overlayColor: MaterialStateProperty.all(
+            Colors.transparent), // Remove efeito de clique
+      ),
+      onPressed: onPressed,
+    );
   }
 
   // Função para diminuir o volume com os botões
@@ -565,9 +665,23 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
     _toggleLed(); // Verificar se algum player está tocando para ativar o LED
     return Scaffold(
-      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        actions: [
+          Switch(
+            value: themeProvider.isDarkMode,
+            onChanged: (value) {
+              themeProvider.toggleTheme();
+            },
+          ),
+        ],
+      ),
+      backgroundColor: (Provider.of<ThemeProvider>(context).isDarkMode
+          ? Colors.white
+          : Colors.black),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
@@ -576,7 +690,7 @@ class _MyHomePageState extends State<MyHomePage> {
             children: [
               _buildLed(),
               SizedBox(
-                height: 50,
+                height: 24,
               ),
               Column(
                 children: [
@@ -611,40 +725,38 @@ class _MyHomePageState extends State<MyHomePage> {
                             fontSize: 28,
                             color: cAudioPlayer_bool == true
                                 ? Colors.red
-                                : Colors.white,
+                                : (Provider.of<ThemeProvider>(context)
+                                        .isDarkMode
+                                    ? Colors.black
+                                    : Colors.white),
                           ),
                         ),
                       ),
                       style: ButtonStyle(
-                        splashFactory: NoSplash.splashFactory,
                         fixedSize:
                             MaterialStateProperty.all<Size>(Size(90, 90)),
-
                         shape:
                             MaterialStateProperty.all<RoundedRectangleBorder>(
-                                RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(18.0),
-                                    side: BorderSide(
-                                        color: cAudioPlayer_bool == true
-                                            ? Colors.red
-                                            : Colors.white))),
-                        backgroundColor:
-                            MaterialStateProperty.resolveWith<Color>(
-                          (Set<MaterialState> states) {
-                            if (cAudioPlayer_bool == true) {
-                              return Colors.transparent;
-                            } else {
-                              // Return another color if the condition is false
-                              return Colors
-                                  .transparent; // Or any other color you prefer
-                            }
-                          },
+                          RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(18.0),
+                            side: BorderSide(
+                              color: cAudioPlayer_bool == true
+                                  ? Colors.red
+                                  : (Provider.of<ThemeProvider>(context)
+                                          .isDarkMode
+                                      ? Colors.black
+                                      : Colors.white),
+                            ),
+                          ),
                         ),
-                        elevation:
-                            MaterialStateProperty.all(0), // Set elevation to 0
+                        backgroundColor: MaterialStateProperty.all(
+                          Provider.of<ThemeProvider>(context).isDarkMode
+                              ? Colors.white
+                              : Colors.black,
+                        ),
+                        elevation: MaterialStateProperty.all(0), // Sem sombra
                         overlayColor: MaterialStateProperty.all(
-                            Colors.transparent), // Remove overlay color
-                        // Add other properties as needed
+                            Colors.transparent), // Remove efeito de clique
                       ),
                       onPressed: () {
                         _togglePad("C",
@@ -657,46 +769,43 @@ class _MyHomePageState extends State<MyHomePage> {
                           "C#",
                           style: TextStyle(
                             fontSize: 28,
-                            color: cSustenidoAudioPlayer_bool == true
+                            color: cSustenidoAudioPlayer_bool
                                 ? Colors.red
-                                : Colors.white,
+                                : (Provider.of<ThemeProvider>(context)
+                                        .isDarkMode
+                                    ? Colors.black
+                                    : Colors.white),
                           ),
                         ),
                       ),
                       style: ButtonStyle(
                         fixedSize:
                             MaterialStateProperty.all<Size>(Size(90, 90)),
-
                         shape:
                             MaterialStateProperty.all<RoundedRectangleBorder>(
-                                RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(18.0),
-                                    side: BorderSide(
-                                        color:
-                                            cSustenidoAudioPlayer_bool == true
-                                                ? Colors.red
-                                                : Colors.white))),
-                        backgroundColor:
-                            MaterialStateProperty.resolveWith<Color>(
-                          (Set<MaterialState> states) {
-                            if (cSustenidoAudioPlayer_bool == true) {
-                              return Colors.transparent;
-                            } else {
-                              // Return another color if the condition is false
-                              return Colors
-                                  .transparent; // Or any other color you prefer
-                            }
-                          },
+                          RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(18.0),
+                            side: BorderSide(
+                              color: cSustenidoAudioPlayer_bool
+                                  ? Colors.red
+                                  : (Provider.of<ThemeProvider>(context)
+                                          .isDarkMode
+                                      ? Colors.black
+                                      : Colors.white),
+                            ),
+                          ),
                         ),
-                        elevation:
-                            MaterialStateProperty.all(0), // Set elevation to 0
+                        backgroundColor: MaterialStateProperty.all(
+                          Provider.of<ThemeProvider>(context).isDarkMode
+                              ? Colors.white
+                              : Colors.black,
+                        ),
+                        elevation: MaterialStateProperty.all(0), // Sem sombra
                         overlayColor: MaterialStateProperty.all(
-                            Colors.transparent), // Remove overlay color
-                        // Add other properties as needed
+                            Colors.transparent), // Remove efeito de clique
                       ),
                       onPressed: () {
-                        _togglePad("C#",
-                            cSustenidoAudioPlayer); // cAudioPlayer é o player associado ao pad C
+                        _togglePad("C#", cSustenidoAudioPlayer);
                       },
                     ),
                     ElevatedButton(
@@ -707,40 +816,38 @@ class _MyHomePageState extends State<MyHomePage> {
                             fontSize: 28,
                             color: dAudioPlayer_bool == true
                                 ? Colors.red
-                                : Colors.white,
+                                : (Provider.of<ThemeProvider>(context)
+                                        .isDarkMode
+                                    ? Colors.black
+                                    : Colors.white),
                           ),
                         ),
                       ),
                       style: ButtonStyle(
-                        splashFactory: NoSplash.splashFactory,
                         fixedSize:
                             MaterialStateProperty.all<Size>(Size(90, 90)),
-
                         shape:
                             MaterialStateProperty.all<RoundedRectangleBorder>(
-                                RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(18.0),
-                                    side: BorderSide(
-                                        color: dAudioPlayer_bool == true
-                                            ? Colors.red
-                                            : Colors.white))),
-                        backgroundColor:
-                            MaterialStateProperty.resolveWith<Color>(
-                          (Set<MaterialState> states) {
-                            if (dAudioPlayer_bool == true) {
-                              return Colors.transparent;
-                            } else {
-                              // Return another color if the condition is false
-                              return Colors
-                                  .transparent; // Or any other color you prefer
-                            }
-                          },
+                          RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(18.0),
+                            side: BorderSide(
+                              color: dAudioPlayer_bool == true
+                                  ? Colors.red
+                                  : (Provider.of<ThemeProvider>(context)
+                                          .isDarkMode
+                                      ? Colors.black
+                                      : Colors.white),
+                            ),
+                          ),
                         ),
-                        elevation:
-                            MaterialStateProperty.all(0), // Set elevation to 0
+                        backgroundColor: MaterialStateProperty.all(
+                          Provider.of<ThemeProvider>(context).isDarkMode
+                              ? Colors.white
+                              : Colors.black,
+                        ),
+                        elevation: MaterialStateProperty.all(0), // Sem sombra
                         overlayColor: MaterialStateProperty.all(
-                            Colors.transparent), // Remove overlay color
-                        // Add other properties as needed
+                            Colors.transparent), // Remove efeito de clique
                       ),
                       onPressed: () {
                         _togglePad("D",
