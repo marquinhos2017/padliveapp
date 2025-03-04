@@ -673,11 +673,62 @@ class _MyHomePageState extends State<MyHomePage> {
     _toggleLed(); // Verificar se algum player está tocando para ativar o LED
     return Scaffold(
       appBar: AppBar(
+        toolbarHeight: 40, // Ajuste a altura do AppBar conforme necessário
         elevation: 0,
         backgroundColor: (Provider.of<ThemeProvider>(context).isDarkMode
             ? Colors.white
             : Colors.black),
         actions: [
+          if (cAudioPlayer_bool ||
+              dAudioPlayer_bool ||
+              eAudioPlayer_bool ||
+              fAudioPlayer_bool ||
+              gAudioPlayer_bool ||
+              aAudioPlayer_bool ||
+              bAudioPlayer_bool ||
+              cSustenidoAudioPlayer_bool ||
+              dSustenidoAudioPlayer_bool ||
+              fSustenidoAudioPlayer_bool ||
+              gSustenidoAudioPlayer_bool ||
+              aSustenidoAudioPlayer_bool ||
+              pad_c_bool ||
+              pad_c_sustenido_bool ||
+              pad_d_bool ||
+              pad_eb_bool ||
+              pad_e_bool ||
+              pad_f_bool ||
+              pad_gb_bool ||
+              pad_g_bool ||
+              pad_ab_bool ||
+              pad_a_bool ||
+              pad_bb_bool ||
+              pad_b_bool)
+            Padding(
+              padding: const EdgeInsets.all(5.0),
+              child: Container(
+                width: 80,
+                height: 10,
+                decoration: BoxDecoration(
+                  color: Colors.transparent,
+                  borderRadius: BorderRadius.circular(18.0),
+                  border: Border.all(color: Colors.red),
+                ),
+                child: InkWell(
+                  onTap: () {
+                    _stop2();
+                    stop();
+                  },
+                  splashColor: Colors.transparent, // Remove splash color
+                  highlightColor: Colors.transparent, // Remove highlight color
+                  child: Center(
+                    child: Icon(
+                      Icons.stop,
+                      color: Colors.red,
+                    ),
+                  ),
+                ),
+              ),
+            ),
           Switch(
             value: themeProvider.isDarkMode,
             onChanged: (value) {
@@ -1326,7 +1377,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   },
                 ),
               ),
-              ElevatedButton(
+              /*     ElevatedButton(
                   style: ButtonStyle(
                     fixedSize: MaterialStateProperty.all<Size>(Size(80, 50)),
 
@@ -1359,6 +1410,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     "Stop",
                     style: TextStyle(color: Colors.red),
                   )),
+       */
             ],
           ),
         ),
